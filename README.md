@@ -290,23 +290,6 @@ The DApp connects to `window.midnight` wallets (1AM / Lace) via the DApp Connect
 | Testing | Vitest 3 (unit + integration), custom e2e script |
 | Local devnet | Docker Compose: `midnight-node` 1.0.0, `indexer-standalone` 4.3.3, `proof-server` 8.1.0 |
 
-## Screenshots
-
-Add screenshots of the running app to `docs/images/` and reference them here.
-
-| Home |
-| --- | --- | --- | --- |
-|<img width="1600" height="773" alt="home" src="https://github.com/user-attachments/assets/b1df0efa-d3d4-4128-a5e6-78c0011a0a04" /> 
-
-
-
-
- Flash loan |
- | <img width="614" height="751" alt="flash-loan png" src="https://github.com/user-attachments/assets/ee19ef19-b63e-4918-a76f-ddc7cf4fc474" />
- | <img width="464" height="458" alt="vault png" src="https://github.com/user-attachments/assets/4479b9f0-2e5b-42d6-95c4-b28ffc22f29f" />
- | <img width="463" height="495" alt="activity png" src="https://github.com/user-attachments/assets/2c32a0c8-8d9e-4872-acf0-8cfb4a050713" />
- |
-
 ## Configuration
 
 ### Frontend (`frontend/.env`, template: `frontend/.env.example`)
