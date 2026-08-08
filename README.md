@@ -8,11 +8,10 @@
 > ✅ **Deployed to Midnight Preview** — contract address:
 > `f0b1e31ef61b6d10df27396667ee666e77c4f94d52fa09f3dfd1b3ec90d854e7`
 
-🚀 Live Demo
+## 🚀 Live Demo & Video
 
-Live Application: https://midnight-flash-loan-demo.netlify.app/
-
-Demo Video: https://youtu.be/fynofLayIQY
+- **Live Application:** [midnight-flash-loan-demo.netlify.app](https://midnight-flash-loan-demo.netlify.app/)
+- **Demo Video:** [Watch the Midnight Flash Loan Demo](https://youtu.be/fynofLayIQY)
 
 🎥 The demo video provides a walkthrough of the deployed Midnight Flash Loan DApp.
 
@@ -166,7 +165,7 @@ simple-flash-loan-demo/
 │   ├── scripts/copy-zk-assets.mjs      # copies compiled artifacts into the bundle
 │   ├── public/midnight/flash-loan/     # ZK artifacts served to the DApp
 │   ├── .env / .env.example             # VITE_* public configuration
-│   └── vercel.json                     # Vercel build settings
+│   └── netlify.toml                    # Netlify build settings
 ├── docs/
 │   ├── architecture/                   # architecture.md, trade-flow.md
 │   └── images/                         # README screenshots
