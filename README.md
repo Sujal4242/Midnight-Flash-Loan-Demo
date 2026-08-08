@@ -8,6 +8,14 @@
 > ✅ **Deployed to Midnight Preview** — contract address:
 > `f0b1e31ef61b6d10df27396667ee666e77c4f94d52fa09f3dfd1b3ec90d854e7`
 
+🚀 Live Demo
+
+Live Application: https://midnight-flash-loan-demo.netlify.app/
+
+Demo Video: https://youtu.be/fynofLayIQY
+
+🎥 The demo video provides a walkthrough of the deployed Midnight Flash Loan DApp.
+
 A zero-knowledge flash loan demo on the [Midnight Network](https://midnight.network): anyone can borrow liquidity from a public vault **without collateral**, on one condition — the loan must be borrowed and repaid inside the **same transaction**. The classic use case, arbitrage between two markets, is demonstrated end-to-end with the trade strategy kept **private** through zero-knowledge witnesses.
 
 ---
