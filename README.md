@@ -296,7 +296,7 @@ Add screenshots of the running app to `docs/images/` and reference them here.
 
 | Home | Flash loan | Vault | Activity |
 | --- | --- | --- | --- |
-| ![Home](docs/images/home.png) | ![Flash loan](docs/images/flashloan.png) | ![Vault](docs/images/vault.png) | ![Activity](docs/images/activity.png) |
+| ![Home]() | ![Flash loan](docs/images/flashloan.png) | ![Vault](docs/images/vault.png) | ![Activity](docs/images/activity.png) |
 
 ## Configuration
 
