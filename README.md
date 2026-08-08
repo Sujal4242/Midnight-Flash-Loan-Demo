@@ -296,8 +296,11 @@ Add screenshots of the running app to `docs/images/` and reference them here.
 
 | Home | Flash loan | Vault | Activity |
 | --- | --- | --- | --- |
-| ![Home](<img width="1600" height="773" alt="home" src="https://github.com/user-attachments/assets/b1df0efa-d3d4-4128-a5e6-78c0011a0a04" />
-) | ![Flash loan](docs/images/flashloan.png) | ![Vault](docs/images/vault.png) | ![Activity](docs/images/activity.png) |
+|<img width="1600" height="773" alt="home" src="https://github.com/user-attachments/assets/b1df0efa-d3d4-4128-a5e6-78c0011a0a04" />
+ | <img width="614" height="751" alt="flash-loan png" src="https://github.com/user-attachments/assets/ee19ef19-b63e-4918-a76f-ddc7cf4fc474" />
+ | <img width="464" height="458" alt="vault png" src="https://github.com/user-attachments/assets/4479b9f0-2e5b-42d6-95c4-b28ffc22f29f" />
+ | <img width="463" height="495" alt="activity png" src="https://github.com/user-attachments/assets/2c32a0c8-8d9e-4872-acf0-8cfb4a050713" />
+ |
 
 ## Configuration
 
