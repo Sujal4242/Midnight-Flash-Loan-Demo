@@ -361,6 +361,6 @@ All are optional overrides; defaults live in `src/network.ts` and `.midnight-sta
 - **Richer monitoring** — expose the public ledger (vault, fees, loans) on a dashboard with historical charts.
 - **More private accounting** — disclose only what the fee model requires, and explore mechanisms that reduce the amount of profit that must cross the public boundary.
 
-## License
+## Author
 
-[MIT](LICENSE) © 2026 Sujal Singh
+© 2026 Sujal Chavan
