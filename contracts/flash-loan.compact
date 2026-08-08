@@ -1,0 +1,173 @@
+// ════════════════════════════════════════════════════════════════════════════
+// Simple Flash Loan Demo — a zero-knowledge flash loan contract on Midnight.
+//
+// A flash loan lets anyone borrow a large amount WITHOUT collateral, on one
+// condition: the loan is borrowed and repaid inside the same transaction. If
+// the borrower cannot repay, the whole transaction reverts atomically. The
+// classic use case is arbitrage between two markets.
+//
+// ── PUBLIC (on-chain — visible to every observer) ────────────────────────────
+//   vaultBalance   Uint<64>   liquidity available to borrow (solvency check)
+//   profitBalance  Uint<64>   accrued base fees + performance fees
+//   loansCompleted Uint<64>   number of fully repaid flash loans
+//   totalBorrowed  Uint<64>   cumulative volume borrowed
+//   lastPair       Opaque     token pair of the most recent arbitrage
+//   lastProfit     Uint<64>   profit disclosed by the most recent flash loan
+//   lastFee        Uint<64>   fee charged on the most recent flash loan
+//   operator       Bytes<32>  SHA-256 commitment of the operator's secret key
+//                             (the operator proves knowledge of the preimage
+//                             inside a ZK proof; the secret never goes on-chain)
+//
+// ── PRIVATE (witness inputs — proved in zero knowledge, NEVER on-chain) ──────
+//   getTrade():            the arbitrageur's exact trade strategy
+//                            { buyPrice, sellPrice, qty } — the circuit proves
+//                            the trade was profitable and covers the fee, but
+//                            no observer can see the prices, quantity or route.
+//   getOperatorSecret():   the operator's 32-byte secret key. Only its hash
+//                            (the `operator` ledger field) is public.
+//   divMod():              Compact has no `/` operator (division is expensive
+//                            in circuits), so the quotient + remainder are
+//                            computed off-chain and VERIFIED by the circuit
+//                            with q * divisor + r == dividend, r < divisor.
+//
+// ── WHY disclose() IS USED DELIBERATELY ─────────────────────────────────────
+//   The contract charges fee = borrowAmount/1000 (0.1% base) + profit/10 (10%
+//   performance fee). The profit and fee must therefore cross the public
+//   boundary so the performance fee can be accounted for on-chain. Everything
+//   derived from the private trade — buy price, sell price, quantity, the
+//   exact route — is NEVER disclosed.
+//
+// ── ATOMIC REPAY-OR-REVERT ───────────────────────────────────────────────────
+//   executeFlashLoan asserts that the sale proceeds from the private trade
+//   are >= borrowAmount + fee. If the trade was unprofitable (or not
+//   profitable enough), the assertion fails and the ENTIRE transaction
+//   reverts — no state change, no partially-executed loan.
+// ════════════════════════════════════════════════════════════════════════════
+
+pragma language_version >= 0.23;
+import CompactStandardLibrary;
+
+export new type OperatorPublicKey = Bytes<32>;
+
+export ledger vaultBalance: Uint<64>;
+export ledger profitBalance: Uint<64>;
+export ledger loansCompleted: Uint<64>;
+export ledger totalBorrowed: Uint<64>;
+export ledger lastPair: Opaque<"string">;
+export ledger lastProfit: Uint<64>;
+export ledger lastFee: Uint<64>;
+export ledger operator: OperatorPublicKey;
+
+// Private arbitrage trade. Only ever flows through the `getTrade()` witness
+// and into the circuit internals — it is never written to the ledger.
+struct Trade {
+    buyPrice: Uint<64>;
+    sellPrice: Uint<64>;
+    qty: Uint<64>;
+}
+
+witness getTrade(): Trade;
+witness getOperatorSecret(): Bytes<32>;
+
+// Witness-provided division. Compact arithmetic is only +, -, * and ==, <=,
+// >=, so the official "Simulating a division in Compact" pattern is used:
+// the prover computes x / y off-chain and the circuit verifies the result
+// cheaply. Strict comparisons are written as (a >= b + 1) since strict < >
+// are not available in this Compact version.
+witness divMod(x: Uint<64>, y: Uint<64>): [Uint<64>, Uint<64>];
+
+circuit div(x: Uint<64>, y: Uint<64>): [Uint<64>, Uint<64>] {
+    const [q, r] = divMod(x, y);
+    assert(y >= r + 1, "Invalid division remainder");
+    assert((q * y) + r == x, "Invalid division result");
+    return [q, r];
+}
+
+// Domain-separated commitment of the operator's secret key. Same secret,
+// different domain separator => uncorrelated with any other hash of it.
+export pure circuit deriveOperatorPublicKey(sk: Bytes<32>): OperatorPublicKey {
+    return persistentHash<Vector<2, Bytes<32>>>([
+        pad(32, "flashloan:operator:v1"),
+        sk
+    ]) as OperatorPublicKey;
+}
+
+constructor() {
+    vaultBalance = 0;
+    profitBalance = 0;
+    loansCompleted = 0;
+    totalBorrowed = 0;
+    lastProfit = 0;
+    lastFee = 0;
+    operator = disclose(deriveOperatorPublicKey(getOperatorSecret()));
+}
+
+// A lender (or the operator) adds liquidity to the vault. The amount is
+// public (it is visible anyway via vaultBalance); nobody needs to know who
+// funded it.
+export circuit fund(amount: Uint<64>): [] {
+    assert(amount >= 1, "Funding amount must be greater than zero");
+    vaultBalance = disclose((vaultBalance + amount) as Uint<64>);
+}
+
+// The core flash loan circuit.
+//   borrowAmount  how much the arbitrageur borrows (public — it changes
+//                 vaultBalance, so secrecy would be fake privacy)
+//   pair          the token pair being arbitraged (public market info)
+//
+//   PRIVATE: getTrade() supplies buyPrice / sellPrice / qty and divMod()
+//            the quotients for the fee. The circuit computes the trade's
+//            profit and only the profit (plus the fee derived from it) is
+//            disclosed.
+export circuit executeFlashLoan(borrowAmount: Uint<64>, pair: Opaque<"string">): [] {
+    assert(borrowAmount >= 1, "Borrow amount must be greater than zero");
+    assert(vaultBalance >= borrowAmount, "Insufficient vault liquidity");
+
+    const trade = getTrade();
+    assert(trade.sellPrice >= trade.buyPrice + 1, "Arbitrage spread must be positive");
+    assert(trade.qty >= 1, "Trade quantity must be positive");
+
+    const buySpend = trade.buyPrice * trade.qty;
+    const sellProceeds = trade.sellPrice * trade.qty;
+    assert(buySpend <= borrowAmount, "Trade cannot spend more than the borrowed amount");
+    assert(sellProceeds >= buySpend + 1, "Trade must be profitable");
+
+    const profit = sellProceeds - buySpend;
+    // Profit crosses the public boundary ONLY here — and only because the
+    // 10% performance fee is computed from it. Prices, quantity and route
+    // stay inside the circuit forever. (Narrowed to Uint<64>: profit must
+    // fit in 64 bits, which the bounded demo amounts guarantee.)
+    const disclosedProfit = disclose(profit as Uint<64>);
+
+    // baseFee = borrowAmount / 1000 (0.1% of principal), performanceFee =
+    // profit / 10 (10% of profit). Both quotients are witness-verified.
+    const [baseFee, ] = div(borrowAmount, 1000 as Uint<64>);
+    const [performanceFee, ] = div(disclosedProfit, 10 as Uint<64>);
+    const fee = baseFee + performanceFee;
+    assert(profit >= fee, "Profit does not cover the loan fee — loan reverted");
+
+    // Atomic repayment: the sale proceeds must repay principal + fee. If not,
+    // the whole transaction reverts (the core flash loan property).
+    assert(sellProceeds >= borrowAmount + fee, "Sale proceeds cannot repay the loan");
+
+    const disclosedFee = disclose(fee as Uint<64>);
+    vaultBalance = disclose((vaultBalance - borrowAmount + borrowAmount + fee) as Uint<64>);
+    profitBalance = disclose((profitBalance + fee) as Uint<64>);
+    loansCompleted = disclose((loansCompleted + 1) as Uint<64>);
+    totalBorrowed = disclose((totalBorrowed + borrowAmount) as Uint<64>);
+    lastPair = disclose(pair);
+    lastProfit = disclosedProfit;
+    lastFee = disclosedFee;
+}
+
+// The operator redeems accrued profit. They prove, in zero knowledge, that
+// they know the secret whose commitment is stored in `operator`.
+export circuit withdrawProfit(amount: Uint<64>): [] {
+    assert(amount >= 1, "Withdrawal amount must be greater than zero");
+    assert(
+        deriveOperatorPublicKey(getOperatorSecret()) == operator,
+        "Only the operator can withdraw profit"
+    );
+    assert(amount <= profitBalance, "Insufficient accrued profit");
+    profitBalance = disclose((profitBalance - amount) as Uint<64>);
+}

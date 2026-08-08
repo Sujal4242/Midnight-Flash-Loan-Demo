@@ -1,0 +1,56 @@
+{
+  "name": "simple-flash-loan-demo",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "A zero-knowledge flash loan demo on Midnight Network: borrow a large amount without collateral as long as the loan is repaid in the same transaction. Demonstrates private arbitrage with the Compact smart contract language.",
+  "author": "SPPU bootcamp — INTO the Midnight",
+  "license": "MIT",
+  "overrides": {
+    "@midnight-ntwrk/onchain-runtime-v3": "3.1.0"
+  },
+  "scripts": {
+    "compile": "compact compile contracts/flash-loan.compact contracts/managed/flash-loan",
+    "build": "tsc --noEmit",
+    "setup": "tsx src/setup.ts",
+    "deploy": "tsx src/deploy.ts",
+    "cli": "tsx src/cli.ts",
+    "check-balance": "tsx src/check-balance.ts",
+    "network": "tsx src/network.ts",
+    "test": "vitest run",
+    "test:unit": "vitest run tests/flash-loan.logic.test.ts",
+    "test:integration": "vitest run tests/flash-loan.test.ts",
+    "test:e2e": "tsx scripts/e2e-check.ts",
+    "frontend:dev": "npm --prefix frontend run dev",
+    "frontend:build": "npm --prefix frontend run build",
+    "frontend:preview": "npm --prefix frontend run preview",
+    "proof-server:start": "docker compose up -d",
+    "proof-server:stop": "docker compose down",
+    "clean": "rm -rf contracts/managed .midnight-state.json .midnight-wallet-state frontend/dist frontend/node_modules"
+  },
+  "dependencies": {
+    "@midnight-ntwrk/compact-runtime": "0.16.0",
+    "@midnight-ntwrk/midnight-js-contracts": "4.1.1",
+    "@midnight-ntwrk/midnight-js-http-client-proof-provider": "4.1.1",
+    "@midnight-ntwrk/midnight-js-indexer-public-data-provider": "4.1.1",
+    "@midnight-ntwrk/midnight-js-level-private-state-provider": "4.1.1",
+    "@midnight-ntwrk/midnight-js-network-id": "4.1.1",
+    "@midnight-ntwrk/midnight-js-node-zk-config-provider": "4.1.1",
+    "@midnight-ntwrk/midnight-js-protocol": "4.1.1",
+    "@midnight-ntwrk/midnight-js-types": "4.1.1",
+    "@midnight-ntwrk/midnight-js-utils": "4.1.1",
+    "@midnight-ntwrk/wallet-sdk": "1.2.0",
+    "rxjs": "^7.8.2",
+    "ws": "^8.21.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/ws": "^8.18.1",
+    "tsx": "^4.23.1",
+    "typescript": "^6.0.3",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "keywords": ["midnight", "flash-loan", "zero-knowledge", "privacy", "arbitrage", "compact"]
+}

@@ -1,0 +1,8 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# SPA fallback for the browser history router (not used by default, but keeps
+# the contract module reachable if the app is navigated directly).
+[build.processing]
+  skip_processing = true
